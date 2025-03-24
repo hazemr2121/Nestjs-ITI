@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 export interface Employee {
   Id: number;
   Name: string;
@@ -58,6 +58,9 @@ export class EmployeeService {
 
   updateEmployee(id: number, employee: Employee) {
     const index = employees.findIndex((e) => e.Id === id);
+    if (index === -1) {
+      throw new NotFoundException("employee not found");
+    }
     if (index !== -1) {
       employees[index] = { ...employees[index], ...employee };
     }

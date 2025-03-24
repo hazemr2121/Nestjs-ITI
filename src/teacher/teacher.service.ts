@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { SchoolService } from 'src/school/school.service';
 export interface Teacher {
   id: number;
   name: string;
@@ -11,6 +12,7 @@ export interface Teacher {
 
 @Injectable()
 export class TeacherService {
+  constructor(@Inject() private readonly schoolService: SchoolService) {}
   private readonly teachers: Teacher[] = [
     {
       id: 1,
@@ -46,7 +48,12 @@ export class TeacherService {
   }
 
   getTeacherById(id: number) {
-    return this.teachers.find((teacher) => teacher.id === id);
+    const teacher = this.teachers.find((teacher) => teacher.id === id);
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+    const school = this.schoolService.getSchoolById(teacher.schoolId);
+    return { ...teacher, school };
   }
 
   addTeacher(teacher: Teacher) {
@@ -57,6 +64,9 @@ export class TeacherService {
 
   updateTeacher(id: number, teacher: Teacher) {
     const index = this.teachers.findIndex((t) => t.id === id);
+    if (index === -1) {
+      throw new NotFoundException('Teacher not found');
+    }
     this.teachers[index] = teacher;
     return this.teachers;
   }
@@ -66,5 +76,4 @@ export class TeacherService {
     this.teachers.splice(index, 1);
     return this.teachers;
   }
-  
 }
