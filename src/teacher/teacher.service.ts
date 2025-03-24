@@ -1,5 +1,16 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SchoolService } from 'src/school/school.service';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import { signInDto, SignUpDto } from 'src/utlis/interfaces';
+import { ConfigService } from '@nestjs/config';
 export interface Teacher {
   id: number;
   name: string;
@@ -8,11 +19,15 @@ export interface Teacher {
   schoolId: number;
   email: string;
   phone: string;
+  password?: string;
 }
 
 @Injectable()
 export class TeacherService {
-  constructor(@Inject() private readonly schoolService: SchoolService) {}
+  constructor(
+    @Inject() private readonly schoolService: SchoolService,
+    private readonly configService: ConfigService,
+  ) {}
   private readonly teachers: Teacher[] = [
     {
       id: 1,
@@ -22,6 +37,7 @@ export class TeacherService {
       schoolId: 1,
       email: 'ahmed.hassan@example.com',
       phone: '+201234567890',
+      password: bcrypt.hashSync('password123', 10),
     },
     {
       id: 2,
@@ -31,6 +47,7 @@ export class TeacherService {
       schoolId: 2,
       email: 'sara.ali@example.com',
       phone: '+201098765432',
+      password: bcrypt.hashSync('password456', 10),
     },
     {
       id: 3,
@@ -40,6 +57,7 @@ export class TeacherService {
       schoolId: 1,
       email: 'mohamed.khaled@example.com',
       phone: '+201112223344',
+      password: bcrypt.hashSync('password789', 10),
     },
   ];
 
@@ -75,5 +93,40 @@ export class TeacherService {
     const index = this.teachers.findIndex((t) => t.id === id);
     this.teachers.splice(index, 1);
     return this.teachers;
+  }
+  signUp(teacher: SignUpDto) {
+    if (this.teachers.find((t) => t.email === teacher.email)) {
+      throw new ConflictException('Teacher already exists');
+    }
+    const hashedPassword = bcrypt.hashSync(teacher.password, 10);
+    const newTeacher = {
+      ...teacher,
+      id: this.teachers[this.teachers.length - 1].id + 1,
+      password: hashedPassword,
+    };
+    this.teachers.push(newTeacher);
+    const { password, ...teacherWithoutPassword } = newTeacher;
+    return teacherWithoutPassword;
+  }
+  signin(credentials: signInDto) {
+    const teacher = this.teachers.find((t) => t.email === credentials.email);
+    if (!teacher) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (
+      !teacher.password ||
+      !bcrypt.compareSync(credentials.password, teacher.password)
+    ) {
+      throw new UnauthorizedException('Invalid password');
+    }
+    // generate token
+    const payload = { email: teacher.email, sub: teacher.id };
+    const jwtToken = jwt.sign(
+      payload,
+      // 'secret',
+      this.configService.get<string>('JWT_SECERT')!,
+    );
+    // const { password, ...teacherWithoutPassword } = teacher;
+    return { jwtToken: jwtToken };
   }
 }

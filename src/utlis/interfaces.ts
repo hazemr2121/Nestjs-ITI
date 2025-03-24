@@ -26,7 +26,7 @@ export class TeachersRequest {
   })
   schoolId: number;
   @ApiProperty({
-    example: 'hossam.gmail.com',
+    example: 'hossam@gmail.com',
   })
   @IsEmail({}, { message: 'Invalid email' })
   email: string;
@@ -72,4 +72,29 @@ export class GetAllSchoolsResponse extends SchoolsRequest {
     example: 1,
   })
   id: number;
+}
+
+export class SignUpDto extends TeachersRequest {
+  @ApiProperty({
+    example: 'Test@1234',
+  })
+  @MinLength(8, {
+    message: 'Password is too short',
+  })
+  @IsNotEmpty()
+  password: string;
+}
+
+export class signInDto {
+  @ApiProperty({
+    example: 'hossam@gmail.com',
+  })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+  @ApiProperty({
+    example: 'Test@1234',
+  })
+  @IsNotEmpty()
+  password: string;
 }
