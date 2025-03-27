@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
+import { TeacherService } from 'src/teacher/teacher.service';
+
 export interface School {
   id: number;
   name: string;
@@ -26,12 +33,13 @@ const schools: School[] = [
 
 @Injectable()
 export class SchoolService {
+  constructor(
+    @Inject(forwardRef(() => TeacherService))
+    private readonly teacherService: TeacherService,
+  ) {}
+
   getSchools() {
     return schools;
-  }
-
-  getSchoolById(id: number) {
-    return schools.find((school) => school.id === id);
   }
 
   addSchool(school: School) {
@@ -56,5 +64,46 @@ export class SchoolService {
     schools.splice(index, 1);
 
     return schools;
+  }
+
+  getSchoolAnalytics() {
+    const teacherCounts = schools.map((school) => {
+      const teacherCount = this.teacherService
+        .getTeachers()
+        .filter((teacher) => Number(teacher.schoolId) === school.id).length;
+      return { id: school.id, name: school.name, teacherCount };
+    });
+
+    const mostTeachers = teacherCounts.reduce((prev, current) =>
+      prev.teacherCount > current.teacherCount ? prev : current,
+    );
+
+    const leastTeachers = teacherCounts.reduce((prev, current) =>
+      prev.teacherCount < current.teacherCount ? prev : current,
+    );
+
+    return {
+      mostTeachers: {
+        id: mostTeachers.id,
+        name: mostTeachers.name,
+        teacherCount: mostTeachers.teacherCount,
+      },
+      leastTeachers: {
+        id: leastTeachers.id,
+        name: leastTeachers.name,
+        teacherCount: leastTeachers.teacherCount,
+      },
+    };
+  }
+  getSchoolById(id: number) {
+    const school = schools.find((school) => school.id === id);
+    if (!school) {
+      throw new NotFoundException('School not found');
+    }
+    const teacherCount = this.teacherService
+      .getTeachers()
+      .filter((teacher) => Number(teacher.schoolId) === school.id).length;
+
+    return { id: school.id, name: school.name, teacherCount };
   }
 }

@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  forwardRef,
 } from '@nestjs/common';
 import { SchoolService } from 'src/school/school.service';
 import * as bcrypt from 'bcrypt';
@@ -25,7 +26,8 @@ export interface Teacher {
 @Injectable()
 export class TeacherService {
   constructor(
-    @Inject() private readonly schoolService: SchoolService,
+    @Inject(forwardRef(() => SchoolService)) // Use forwardRef here
+    private readonly schoolService: SchoolService,
     private readonly configService: ConfigService,
   ) {}
   private readonly teachers: Teacher[] = [
@@ -62,7 +64,10 @@ export class TeacherService {
   ];
 
   getTeachers() {
-    return this.teachers;
+    return this.teachers.map((teacher) => ({
+      ...teacher,
+      schoolId: Number(teacher.schoolId),
+    }));
   }
 
   getTeacherById(id: number) {

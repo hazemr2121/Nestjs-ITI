@@ -25,10 +25,11 @@ export class SchoolController {
   getSchools() {
     return this.schoolService.getSchools();
   }
-  @Get('/:id')
-  getSchoolbyId(@Param('id', ParseIntPipe) id: number) {
-    return this.schoolService.getSchoolById(id);
+  @Get('/analytics')
+  getSchoolAnalytics() {
+    return this.schoolService.getSchoolAnalytics();
   }
+
   @Post('/')
   addSchool(@Body() school: GetAllSchoolsResponse) {
     return this.schoolService.addSchool(school);
@@ -40,5 +41,10 @@ export class SchoolController {
   @Delete('/:id')
   deleteSchool(@Param('id', ParseIntPipe) id: number) {
     return this.schoolService.deleteSchool(id);
+  }
+
+  @Get('/:id')
+  getSchoolbyId(@Param('id', ParseIntPipe) id: number) {
+    return this.schoolService.getSchoolById(id);
   }
 }

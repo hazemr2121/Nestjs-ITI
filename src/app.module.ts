@@ -11,6 +11,7 @@ import { SchoolModule } from './school/school.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { ConfigModule } from '@nestjs/config';
 import { IsAuthenticatedMiddleware } from './middlewares/is-authenticated.middleware';
+import { TeacherService } from './teacher/teacher.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { IsAuthenticatedMiddleware } from './middlewares/is-authenticated.middle
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TeacherService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
